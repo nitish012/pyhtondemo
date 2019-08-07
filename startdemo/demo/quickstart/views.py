@@ -16,7 +16,7 @@ class StudentviewSet(mixins.CreateModelMixin,
                                 mixins.RetrieveModelMixin,
                                 viewsets.GenericViewSet):
     queryset = Student.objects.all()
-    serializer = StudentSerializer
+    serializer_class = StudentSerializer
 
     # def list(self, request):
     #     queryset = Student.objects.all()
