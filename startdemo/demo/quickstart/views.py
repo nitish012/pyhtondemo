@@ -1,50 +1,70 @@
-from rest_framework import viewsets,generics
-from quickstart.models import Student
 from django.shortcuts import get_object_or_404
-from quickstart.serializers import StudentSerializer
+#from django.views.decorators.cache import never_cache
 from rest_framework.response import Response
-
-#Create your views here.
-
-# class StudentViewSet(viewsets.ModelViewSet):
-#     queryset = Student.objects.all()
-#     serializer_class = StudentSerializer
+from rest_framework import viewsets,generics
+from quickstart.models import Student,Teacher
+from quickstart.serializers import StudentSerializer,TeacherSerializer
 
 class StudentviewSet(viewsets.ViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
+    #@never_cache
     def list(self, request):
-        queryset = Student.objects.all()
-        serializer = StudentSerializer(queryset, many=True)
+        serializer = self.serializer_class(self.queryset, many=True)
         return Response(serializer.data)
-    
+        
     def retrieve(self, request, pk=None):
-        queryset = Student.objects.all()
-        user = get_object_or_404(queryset, pk=pk)
-        serializer = StudentSerializer(user)
+        user = get_object_or_404(self.queryset, pk=pk)
+        serializer = self.serializer_class(user)
         return Response(serializer.data)
 
-    # def create(self,request):
-    #     serializer = StudentSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def create(self,request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors) 
 
-    def create(self, request, *args, **kwargs):
-        if request.data.get('id'):
-            return super(StudentViewSet, self).update(request, *args, **kwargs)
-        else:
-            return super(StudentViewSet, self).create(request, *args, **kwargs)
+    def update(self, request, pk=None):
+        instance = self.queryset.get(pk=pk)
+        serializer = self.serializer_class(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)    
 
-class StudentInsert(generics.CreateAPIView):
-    ''' Inserting a records of students'''
-    queryset = Student.objects.all()
-    serializer_class=StudentSerializer
+    def destroy(self, request, pk=None):
+        instance = self.queryset.get(pk=pk)
+        instance.delete()    
+ 
+class TeacherviewSet(viewsets.ViewSet):
+    queryset = Teacher.objects.all()
+    serializer_class = TeacherSerializer
+    
+    def list(self,request):
+        serializer = self.serializer_class(self.queryset,many=True)
+        return Response(serializer.data)  
 
+    def retrieve(self, request, pk=None):
+        t = Teacher.objects.get(pk=pk)
+        serializer = self.serializer_class(t)
+        return Response(serializer.data)
+        
+    def create(self,request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
 
-class StudentList(generics.RetrieveUpdateDestroyAPIView):
-    ''' fetching list of students'''
-    queryset = Student.objects.get_queryset()
-    serializer_class=StudentSerializer    
+    def update(self, request, pk=None):
+        instance = self.queryset.get(pk=pk)
+        serializer = self.serializer_class(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+  
+    def destroy(self, request, pk=None):
+        instance = self.queryset.get(pk=pk)
+        instance.delete()
+        return Response(status=204)
